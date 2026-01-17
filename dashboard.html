@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Developer Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root{
+  --yellow:#ffd400;
+  --bg:#050505;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+
+body{
+  background:var(--bg);
+  color:#fff;
+  padding:40px 60px;
+}
+
+/* TOP */
+.top-bar{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:40px;
+}
+.back{color:#aaa;text-decoration:none;font-size:14px;}
+.close{cursor:pointer;font-size:22px;color:#aaa;}
+
+/* TITLE */
+h1{font-size:42px;margin-bottom:10px;}
+h1 span{color:var(--yellow);}
+.subtitle{color:#888;margin-bottom:50px;}
+
+/* STATS */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:25px;
+  margin-bottom:50px;
+}
+.card{
+  padding:25px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#111,#000);
+  border:1px solid #222;
+}
+.card h3{font-size:28px;}
+.card p{font-size:13px;color:#aaa;}
+
+.yellow{border-color:#3a3200;}
+.green{border-color:#003a1f;}
+.blue{border-color:#00253a;}
+.purple{border-color:#2a003a;}
+
+/* CHARTS */
+.grid{
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:30px;
+}
+.chart,.pie{
+  background:#0a0a0a;
+  border:1px solid #222;
+  padding:30px;
+  border-radius:16px;
+}
+canvas{max-width:100%;}
+
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr;}
+}
+
+/* PROJECTS */
+.projects{margin-top:70px;}
+.section-title{font-size:22px;margin-bottom:30px;color:#aaa;}
+.section-title.active{color:#00ff8f;}
+.section-title.inactive{color:#888;}
+.section-title.bot{color:#4da6ff;}
+
+.project-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:25px;
+}
+.project-grid.two{
+  grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
+}
+
+.project-card{
+  background:linear-gradient(135deg,#0d0d0d,#000);
+  border:1px solid #222;
+  padding:25px;
+  border-radius:16px;
+  cursor:pointer;
+  position:relative;
+}
+.project-card.highlight{border-color:var(--yellow);}
+.project-card.faded{opacity:.7;}
+
+.project-head{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:10px;
+}
+
+.status{
+  font-size:11px;
+  padding:4px 10px;
+  border-radius:20px;
+}
+.status.progress{background:#3a3200;color:#ffd400;}
+.status.active{background:#003a1f;color:#00ff8f;}
+.status.paused{background:#333;color:#aaa;}
+.status.archived{background:#222;color:#777;}
+
+.desc{font-size:13px;color:#aaa;margin:10px 0;}
+
+.progress-bar{
+  height:6px;
+  background:#222;
+  border-radius:6px;
+  margin:10px 0;
+}
+.progress-bar span{
+  display:block;
+  height:100%;
+  background:var(--yellow);
+  border-radius:6px;
+}
+
+.tags span{
+  display:inline-block;
+  background:#111;
+  padding:4px 10px;
+  font-size:11px;
+  border-radius:6px;
+  margin:6px 6px 0 0;
+}
+
+.meta{font-size:12px;color:#777;margin-top:10px;display:block;}
+
+/* BOT STATUS */
+.dot{
+  position:absolute;
+  top:20px;
+  right:20px;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+}
+.dot.online{background:#00ff8f;}
+.dot.offline{background:#ff4d4d;}
+
+.stat{font-size:13px;margin-top:8px;}
+.good{color:#00ff8f;}
+.bad{color:#ff4d4d;}
+
+/* MODAL */
+.project-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+.modal-content{
+  background:#0b0b0b;
+  border:1px solid #222;
+  padding:35px;
+  border-radius:18px;
+  width:90%;
+  max-width:500px;
+  position:relative;
+}
+.modal-close{
+  position:absolute;
+  top:20px;
+  right:25px;
+  cursor:pointer;
+  font-size:22px;
+}
+.modal-btn{
+  background:var(--yellow);
+  color:#000;
+  padding:10px 26px;
+  border-radius:20px;
+  text-decoration:none;
+  font-weight:600;
+}
+
+
+/* PROJECT IMAGE */
+.project-img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+  border-radius:12px;
+  margin-bottom:15px;
+  border:1px solid #222;
+}
+
+/* Hover zoom effect (premium) */
+.project-card:hover .project-img{
+  transform:scale(1.03);
+  transition:.3s ease;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="top-bar">
+  <a href="index.html" class="back">← Back to Portfolio</a>
+  <div class="close" onclick="location.href='index.html'">✕</div>
+</div>
+
+<h1>Developer <span>Dashboard</span></h1>
+<p class="subtitle">Overview of my development activity and projects</p>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="card yellow"><h3>8</h3><p>Total Projects</p></div>
+  <div class="card green"><h3>3</h3><p>Active Projects</p></div>
+  <div class="card blue"><h3>3</h3><p>Discord Bots</p></div>
+  <div class="card purple"><h3>416</h3><p>Total Commits</p></div>
+</div>
+
+<!-- CHARTS -->
+<div class="grid">
+  <div class="chart">
+    <h4>Monthly Activity</h4>
+    <canvas id="activityChart"></canvas>
+  </div>
+  <div class="pie">
+    <h4>Skills Distribution</h4>
+    <canvas id="skillsChart"></canvas>
+  </div>
+</div>
+
+
+<!-- WEBSITE PROJECTS -->
+<section class="projects">
+  <h3 class="section-title active">Website Projects</h3>
+
+  <div class="project-grid">
+
+    <!-- Portfolio Website -->
+    <div class="project-card highlight"
+    onclick="openProject(
+      'Personal Portfolio Website',
+      'Modern responsive portfolio website showcasing skills, projects, and contact information.',
+      ['HTML','CSS','JavaScript'],
+      'https://sleep-go.vercel.app'
+    )">
+
+          <!-- PROJECT IMAGE -->
+  <img src="https://cdn.discordapp.com/attachments/1100338291708010568/1461815210217177138/image.png?ex=696bed01&is=696a9b81&hm=ead65316ef1058631837b156850480a8ebf2302feb5df0c567855633b7bc9a43&"
+       alt="SleepyGo Website"
+       class="project-img">
+
+
+      <div class="project-head">
+        <h4>SleepyGo</h4>
+        <span class="status active">Live</span>
+      </div>
+      <div class="progress-bar">
+        <span style="width:100%"></span>
+      </div>
+    </div>
+
+    <!-- Dashboard Website -->
+    <div class="project-card"
+    onclick="openProject(
+      'Developer Dashboard',
+      'Interactive developer dashboard with charts, project tracking, and analytics.',
+      ['HTML','CSS','JavaScript','Chart.js'],
+      'dashboard.html'
+    )"> 
+
+
+                  <!-- PROJECT IMAGE -->
+  <img src="https://via.placeholder.com/600x350"
+       alt="SleepyGo Website"
+       class="project-img">
+
+
+      <div class="project-head">
+        <h4>Developer Dashboard</h4>
+        <span class="status active">Live</span>
+      </div>
+      <div class="progress-bar">
+        <span style="width:95%"></span>
+      </div>
+    </div>
+
+    <!-- Business Website -->
+    <div class="project-card"
+    onclick="openProject(
+      'Business Landing Page',
+      'Professional landing page designed for small businesses and startups.',
+      ['HTML','CSS','Responsive Design'],
+      'https://github.com'
+    )">
+
+                  <!-- PROJECT IMAGE -->
+  <img src="https://via.placeholder.com/600x350"
+       alt="SleepyGo Website"
+       class="project-img">
+
+
+      <div class="project-head">
+        <h4>Business Landing Page</h4>
+        <span class="status progress">In Progress</span>
+      </div>
+      <div class="progress-bar">
+        <span style="width:70%"></span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ACTIVE PROJECTS -->
+<section class="projects">
+<h3 class="section-title active">Active Projects</h3>
+<div class="project-grid">
+
+<div class="project-card highlight"
+onclick="openProject('FiveM Server Manager','Advanced FiveM server management dashboard',['JavaScript','Node.js','MySQL'],'https://github.com')">
+<div class="project-head">
+<h4>FiveM Server Manager</h4>
+<span class="status progress">In Progress</span>
+</div>
+<div class="progress-bar"><span style='width:75%'></span></div>
+</div>
+
+<div class="project-card"
+onclick="openProject('Discord Music Bot','Feature-rich Discord music bot',['Discord.js','Node.js'],'https://github.com')">
+<div class="project-head">
+<h4>Discord Music Bot</h4>
+<span class="status active">Active</span>
+</div>
+<div class="progress-bar"><span style='width:90%'></span></div>
+</div>
+
+</div>
+</section>
+
+<!-- INACTIVE PROJECTS -->
+<section class="projects">
+<h3 class="section-title inactive">Inactive Projects</h3>
+<div class="project-grid two">
+
+<div class="project-card faded"
+onclick="openProject('Game Tracker Bot','Gaming stats tracker Discord bot',['Python','discord.py'],'https://github.com')">
+<div class="project-head">
+<h4>Game Tracker Bot</h4>
+<span class="status paused">Paused</span>
+</div>
+</div>
+
+<div class="project-card faded"
+onclick="openProject('Study Timer App','Pomodoro timer with tasks',['HTML','CSS','JavaScript'],'https://github.com')">
+<div class="project-head">
+<h4>Study Timer App</h4>
+<span class="status archived">Archived</span>
+</div>
+</div>
+
+</div>
+</section>
+
+<!-- DISCORD BOT PROJECTS -->
+<section class="projects">
+<h3 class="section-title bot">Discord Bot Projects</h3>
+<div class="project-grid">
+
+<div class="project-card">
+<span class="dot online"></span>
+<h4>Andrew Bot</h4>
+<p class="stat">Servers <b>12</b></p>
+<p class="stat">Uptime <b class="good">99.8%</b></p>
+<p class="stat">Commands <b>45</b></p>
+</div>
+
+<div class="project-card">
+<span class="dot online"></span>
+<h4>RP Manager</h4>
+<p class="stat">Servers <b>3</b></p>
+<p class="stat">Uptime <b class="good">98.5%</b></p>
+<p class="stat">Commands <b>32</b></p>
+</div>
+
+<div class="project-card">
+<span class="dot offline"></span>
+<h4>Game Stats Bot</h4>
+<p class="stat">Servers <b>5</b></p>
+<p class="stat">Uptime <b class="bad">0%</b></p>
+<p class="stat">Commands <b>28</b></p>
+</div>
+
+</div>
+</section>
+
+<!-- MODAL -->
+<div class="project-modal" id="projectModal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal()">✕</span>
+    <h3 id="modalTitle"></h3>
+    <p id="modalDesc"></p>
+    <div id="modalTags" class="tags"></div>
+    <br>
+    <a id="modalLink" class="modal-btn" target="_blank">View Project</a>
+  </div>
+</div>
+
+<script>
+new Chart(activityChart,{type:'line',data:{labels:['Jan','Feb','Mar','Apr','May','Jun'],datasets:[{label:'Commits',data:[45,52,68,72,88,98],borderColor:'#ffd400',tension:.4},{label:'Projects',data:[2,3,5,4,6,7],borderColor:'#ff9f00',tension:.4}]}});
+new Chart(skillsChart,{type:'pie',data:{labels:['JavaScript','Python','HTML/CSS','Discord.js','Other'],datasets:[{data:[35,25,20,15,5],backgroundColor:['#ffd400','#ffb000','#ff8c00','#ff6a00','#555']}]}});
+function openProject(t,d,tags,l){
+  modalTitle.innerText=t;
+  modalDesc.innerText=d;
+  modalTags.innerHTML='';
+  tags.forEach(x=>modalTags.innerHTML+=`<span>${x}</span>`);
+  modalLink.href=l;
+  projectModal.style.display='flex';
+}
+function closeModal(){projectModal.style.display='none';}
+projectModal.onclick=e=>{if(e.target.id==='projectModal')closeModal();}
+</script>
+
+</body>
+</html>
